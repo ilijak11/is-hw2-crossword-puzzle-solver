@@ -19,46 +19,52 @@ class ExampleAlgorithm(Algorithm):
 
 class Backtracking(Algorithm):
 
-    def build_constraints(self, tiles):
-        try:
-            variable_fields = {}
-            for i in range(len(tiles)):
-                for j in range(len(tiles[i])):
-                    if tiles[i][j]:
-                        continue
-                    if not j or tiles[i][j - 1]:
-                        try:
-                            pos = tiles[i][j:].index(True)
-                        except ValueError:
-                            pos = len(tiles[i]) - j
-                        variable_fields[f'{i * len(tiles[i]) + j}h'] = [(len(tiles[i]) * i + j + inc) for inc in range(pos)]
-                    if not i or tiles[i - 1][j]:
-                        column = [row[j] for row in tiles]
-                        try:
-                            pos = column[i:].index(True)
-                        except ValueError:
-                            pos = len(column) - i
-                        variable_fields[f'{i * len(tiles[i]) + j}v'] = [((len(tiles[i]) * (i + inc)) + j) for inc in range(pos)]
-        except Exception as e:
-            raise e
-        
-        vars = list(variable_fields.keys())
+    def build_constraints(self, variables, tiles):
 
+        var_fields = {var: [] for var in variables.keys()}
+        row_len = len(tiles[0])
+
+        for var in variables.keys():
+
+            var_len = variables[var]
+            var_num = int(var[:-1])
+            i = var_num // row_len
+            j = var_num % row_len
+
+            if var[-1] == 'h':
+                var_fields[var] = [(row_len * i  + j + inc) for inc in range(var_len)]
+            if var[-1] == 'v':
+                var_fields[var] = [((row_len * (i + inc))  + j) for inc in range(var_len)]
+
+        print('VARS')
+        for k, v in variables.items():
+            print(k, " ", v)
+
+        print('VAR FIELDS')
+        for k, v in var_fields.items():
+            print(k, " ", v)
+
+
+        vars = list(variables.keys())
         constraints = {var: [] for var in vars}
 
         for i in range(len(vars)):
             j = i + 1
             var1 = vars[i]
-            fields1 = variable_fields[var1]
+            fields1 = var_fields[var1]
             while j < len(vars):
                 var2 = vars[j]
 
-                for ind, field in enumerate(variable_fields[var2]):
+                for ind, field in enumerate(var_fields[var2]):
                     if field in fields1:
                         constraints[var1].append({'type': 1, 'var': var2, 'var_ind': ind, 'my_ind': fields1.index(field)})
                         constraints[var2].append({'type': 1, 'var': var1, 'var_ind': fields1.index(field), 'my_ind': ind})
                         
                 j = j + 1
+
+        print('CONSTRAINTS')
+        for k, v in constraints.items():
+            print(k, " ", v)
 
         return constraints
 
@@ -106,7 +112,7 @@ class Backtracking(Algorithm):
             print("---------------------")
             return True
 
-        var = list(vars.keys())[curr_var_ind]
+        var = list(vars)[curr_var_ind]
 
         print("---------------------")
         print("VAR: ", var)
@@ -143,21 +149,20 @@ class Backtracking(Algorithm):
             print(var, " ", domain)
 
         #build constraints:
-        constraints = self.build_constraints(tiles)
+        constraints = self.build_constraints(variables, tiles)
         print("Constraints")
         #print(constraints)
 
-        curr_var_ind = 0
         solution = []
         var_values = {var: None for var in variables.keys()}
 
         #call backtrack algorithm
 
         print("Backtrack START")
-        self.backtrack({var: None for var in variables.keys()}, words, curr_var_ind, domains, constraints, solution, var_values)
+        self.backtrack({var: None for var in variables.keys()}, words, 0, domains, constraints, solution, var_values)
         print("Backtrack END")
 
-        print("STEPS")
+        print("STEPS: ", len(solution))
         print(solution)
         print("SOLUTON")
         print(var_values)

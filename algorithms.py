@@ -159,14 +159,94 @@ class Backtracking(Algorithm):
         #call backtrack algorithm
 
         print("Backtrack START")
-        self.backtrack({var: None for var in variables.keys()}, words, 0, domains, constraints, solution, var_values)
+        success = self.backtrack({var: None for var in variables.keys()}, words, 0, domains, constraints, solution, var_values)
         print("Backtrack END")
 
-        print("STEPS: ", len(solution))
-        print(solution)
-        print("SOLUTON")
-        print(var_values)
+        if success:
+            print("Solution found!")
+            print("STEPS: ", len(solution))
+            print(solution)
+            print("SOLUTON")
+            print(var_values)
+        else:
+            print("Solution does not exist")
 
         return solution
 
         #print(domains)
+
+
+class ForwardChecking(Backtracking):
+
+    def forward_check_vars(self, sel_var, sel_val, vars, domains, constraints):
+        
+        print("FORWARD CHECKING - VAR: ", sel_var, " VAL: ", sel_val)
+        for constraint in constraints[sel_var]:
+            
+            #constraining variable
+            comparing_var = constraint['var']
+
+            #value not yet assigned
+            if vars[comparing_var] is None:
+                remove_list = []
+                my_ind = constraint['my_ind']
+                var_ind = constraint['var_ind']
+                for word in domains[comparing_var]:
+                    if word[var_ind] != sel_val[my_ind]:
+                        remove_list.append(word)
+
+                print("DOMAIN BEFORE FORWARD CHECKING - VAR: ", comparing_var)
+                print(domains[comparing_var])
+
+                for word in remove_list:
+                    domains[comparing_var].remove(word)
+                    print(word, " removed from domain for VAR: ", comparing_var)
+
+                print("DOMAIN AFTER FORWARD CHECKING - VAR: ", comparing_var)
+                print(domains[comparing_var])
+
+
+                if not len(domains[comparing_var]):
+                    return False
+
+        return True
+
+            
+
+    def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
+        if curr_var_ind == len(vars):
+            print("END")
+            print("---------------------")
+            return True
+
+        var = list(vars.keys())[curr_var_ind]
+
+        print("---------------------")
+        print("VAR: ", var)
+
+        for ind, val in enumerate(domains[var]):
+            print("VAR: ", var)
+            if self.is_consistent(var, val, vars, domains, constraints):
+                print("     VAL: ", val, " OK")
+                solution.append([var, ind, domains])
+                copied_domains = copy.deepcopy(domains)
+                copied_vars = copy.deepcopy(vars)
+                copied_domains[var] = [val]
+                copied_vars[var] = val
+                var_values[var] = val
+                if not self.forward_check_vars(var, val, copied_vars, copied_domains, constraints):
+                    #if var domain is empty after forward cheking do not continue search
+                    print("DOMAIN EMPTY")
+                    continue
+                if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
+                    print("STEP UP")
+                    print("---------------------")
+                    return True
+            else:
+                print("     VAL: ", val, " NOT OK")
+        
+        #backtrack
+        solution.append([var, None, domains])
+        print("BACKTRACK")
+        print("---------------------")
+        return False

@@ -122,11 +122,15 @@ class Backtracking(Algorithm):
             if self.is_consistent(var, val, vars, domains, constraints):
                 print("     VAL: ", val, " OK")
                 solution.append([var, ind, domains])
+                
                 copied_domains = copy.deepcopy(domains)
                 copied_vars = copy.deepcopy(vars)
                 copied_domains[var] = [val]
                 copied_vars[var] = val
                 var_values[var] = val
+
+                #solution.append([var, copied_domains[var].index(val), copied_domains])
+                
                 if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
                     print("STEP UP")
                     print("---------------------")
@@ -238,6 +242,9 @@ class ForwardChecking(Backtracking):
                     #if var domain is empty after forward cheking do not continue search
                     print("DOMAIN EMPTY")
                     continue
+
+                #solution.append([var, copied_domains[var].index(val), copied_domains])
+
                 if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
                     print("STEP UP")
                     print("---------------------")

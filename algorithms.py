@@ -122,7 +122,6 @@ class Backtracking(Algorithm):
             if self.is_consistent(var, val, vars, domains, constraints):
                 print("     VAL: ", val, " OK")
                 solution.append([var, ind, domains])
-                
                 copied_domains = copy.deepcopy(domains)
                 copied_vars = copy.deepcopy(vars)
                 copied_domains[var] = [val]

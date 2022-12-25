@@ -3,10 +3,8 @@ import sys
 import game
 import algorithms
 import copy
+import itertools
 
-
-def backtrack():
-    pass
 
 class BackTracking(algorithms.Algorithm):
 
@@ -316,6 +314,102 @@ class ForwardChecking(algorithms.Backtracking):
 
 
 
+class ArcConsistency(algorithms.ForwardChecking):
+
+    def get_arcs(self, constraints):
+        arcs = []
+        for var, var_constraints in constraints.items():
+            for constraint_var, constraint in var_constraints.items():
+                arcs.append((var, constraint_var, constraint))
+
+        return arcs
+
+
+
+    # def update_arcs_domains(self, sel_var, sel_val, domains, constraints):
+    #     all_arcs = self.get_arcs(constraints)
+    #     while len(all_arcs) > 0:
+    #         x, y, constraint = all_arcs.pop(0)
+    #         if x != sel_var and y != sel_var:
+    #             val_pairs = itertools.product(domains[x], domains[y])
+    #             for pair in val_pairs:
+
+
+    def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
+        if curr_var_ind == len(vars):
+            print("END")
+            print("---------------------")
+            return True
+
+        var = list(vars.keys())[curr_var_ind]
+
+        print("---------------------")
+        print("VAR: ", var)
+
+        for ind, val in enumerate(domains[var]):
+            print("VAR: ", var)
+            if self.is_consistent(var, val, vars, domains, constraints):
+                print("     VAL: ", val, " OK")
+                solution.append([var, ind, domains])
+                copied_domains = copy.deepcopy(domains)
+                copied_vars = copy.deepcopy(vars)
+                copied_domains[var] = [val]
+                copied_vars[var] = val
+                var_values[var] = val
+                if not self.forward_check_vars(var, val, copied_vars, copied_domains, constraints):
+                    #if var domain is empty after forward cheking do not continue search
+                    print("DOMAIN EMPTY")
+                    continue
+                if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
+                    print("STEP UP")
+                    print("---------------------")
+                    return True
+            else:
+                print("     VAL: ", val, " NOT OK")
+        
+        #backtrack
+        solution.append([var, None, domains])
+        print("BACKTRACK")
+        print("---------------------")
+        return False
+
+    def test(self, tiles, variables, words):
+        #build domains:
+        domains = self.build_domains(variables, words)
+        print("Domains")
+        #print(domains)
+        for var, domain in domains.items():
+            print(var, " ", domain)
+
+        #build constraints:
+        constraints = self.build_constraints(variables, tiles)
+        print("Constraints")
+        print(constraints)
+
+        arcs = self.get_arcs(constraints)
+        print("Arcs")
+        print(arcs)
+
+        curr_var_ind = 0
+        solution = []
+        var_values = {var: None for var in variables.keys()}
+
+        #call backtrack algorithm
+
+        # print("Backtrack START")
+        # success = self.backtrack({var: None for var in variables.keys()}, words, curr_var_ind, domains, constraints, solution, var_values)
+        # print("Backtrack END")
+        # if success:
+        #     print("STEPS: ", len(solution))
+        #     print(solution)
+        #     print("SOLUTON")
+        #     print(var_values)
+        # else:
+        #     print("Solution does not exist")
+
+        #print(domains)
+
+
 
 if __name__ == "__main__":
     shcema_file = sys.argv[1]
@@ -335,6 +429,10 @@ if __name__ == "__main__":
     elif alg == 2:
         print("Backtracking + ForwardChecking")
         ForwardChecking().get_algorithm_steps(tiles, variables, words)
+    elif alg == 3:
+        print("Get all arcs test")
+        ArcConsistency().test(tiles, variables, words)
+    
     # print(tiles)
     # print(words)
     # print(variables)

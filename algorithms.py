@@ -266,3 +266,102 @@ class ForwardChecking(Backtracking):
         print("BACKTRACK")
         print("---------------------")
         return False
+
+class ArcConsistency(ForwardChecking):
+
+    def get_arcs(self, constraints):
+        arcs = []
+        for var, var_constraints in constraints.items():
+            for constraint_var, constraint in var_constraints.items():
+                arcs.append((var, constraint_var, constraint))
+
+        return arcs
+
+    def resolve_inconsistency(self, sel_var, sel_val, domains, constraints):
+        arcs = self.get_arcs(constraints)
+        print("RESOLVING INCONSISTENCIES")
+        while len(arcs):
+            x, y, constraint = arcs.pop(0)
+            print("ARC X: ", x, " Y: ", y)
+            if x != sel_var and y != sel_var:
+                x_remove = []
+                for x_val in domains[x]:
+                    remove = True
+                    for y_val in domains[y]:
+                        if self.check_intersection(x_val, y_val, constraint):
+                            remove = False
+                            break
+                    if remove:
+                        x_remove.append(x_val)
+
+                print("DOMAIN BEFORE AC - VAR: ", x)
+                print(domains[x])
+
+                if len(x_remove):
+
+                    for word in x_remove:
+                        domains[x].remove(word)
+                        print(word, " removed from domain for VAR: ", x)
+                    
+                    if not len(domains[x]):
+                        return False
+                    
+                    for constraint_var, constraint in constraints[x].items():
+                        if constraint_var != sel_var:
+                            arcs.append((constraint_var, x, constraints[constraint_var][x]))
+                            print("ARC X: ", constraint_var, " Y: ", x, " ADDED")
+
+                print("DOMAIN AFTER AC - VAR: ", x)
+                print(domains[x])
+
+        return True
+
+    def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
+        if curr_var_ind == len(vars):
+            print("END")
+            print("---------------------")
+            return True
+
+        var = list(vars.keys())[curr_var_ind]
+
+        print("---------------------")
+        print("VAR: ", var)
+
+        for ind, val in enumerate(domains[var]):
+            print("VAR: ", var)
+            if self.is_consistent(var, val, vars, domains, constraints):
+                print("     VAL: ", val, " OK")
+                #solution.append([var, ind, domains])
+                copied_domains = copy.deepcopy(domains)
+                copied_vars = copy.deepcopy(vars)
+                copied_domains[var] = [val]
+                copied_vars[var] = val
+                var_values[var] = val
+                if not self.forward_check_vars(var, val, copied_vars, copied_domains, constraints):
+                    #if var domain is empty after forward cheking do not continue search
+                    copied_vars[var] = None
+                    var_values[var] = None
+                    print("DOMAIN EMPTY")
+                    continue
+
+                if not self.resolve_inconsistency(var, val, copied_domains, constraints):
+                    #if var domain is empty after forward cheking do not continue search
+                    copied_vars[var] = None
+                    var_values[var] = None
+                    print("DOMAIN EMPTY")
+                    continue
+
+                solution.append([var, copied_domains[var].index(val), copied_domains])
+
+                if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
+                    print("STEP UP")
+                    print("---------------------")
+                    return True
+            else:
+                print("     VAL: ", val, " NOT OK")
+        
+        #backtrack
+        solution.append([var, None, domains])
+        print("BACKTRACK")
+        print("---------------------")
+        return False

@@ -60,7 +60,7 @@ class BackTracking(algorithms.Algorithm):
 
 
         vars = list(variables.keys())
-        constraints = {var: [] for var in vars}
+        constraints = {var: {} for var in vars}
 
         for i in range(len(vars)):
             j = i + 1
@@ -71,8 +71,8 @@ class BackTracking(algorithms.Algorithm):
 
                 for ind, field in enumerate(var_fields[var2]):
                     if field in fields1:
-                        constraints[var1].append({'type': 1, 'var': var2, 'var_ind': ind, 'my_ind': fields1.index(field)})
-                        constraints[var2].append({'type': 1, 'var': var1, 'var_ind': fields1.index(field), 'my_ind': ind})
+                        constraints[var1][var2] = {'var_ind': ind, 'my_ind': fields1.index(field)}
+                        constraints[var2][var1] = {'var_ind': fields1.index(field), 'my_ind': ind}
                         
                 j = j + 1
 
@@ -138,6 +138,12 @@ class BackTracking(algorithms.Algorithm):
         
         return domains
 
+    def check_intersection(self, x_val, y_val, constraint):
+        #return True if vars have the same letter at intersecting indexes
+        x_ind = constraint['my_ind']
+        y_ind = constraint['var_ind']
+        return x_val[x_ind] == y_val[y_ind]
+
 
     def is_consistent(self, sel_var, sel_val, vars, domains, constraints):
         #var - selected variable
@@ -145,7 +151,7 @@ class BackTracking(algorithms.Algorithm):
         #domains - other variable domains
         #constraints - variable constraints
 
-        for constraint in constraints[sel_var]:
+        for constraint_var, constraint in constraints[sel_var].items():
 
             #one word multiple times
 
@@ -158,13 +164,14 @@ class BackTracking(algorithms.Algorithm):
             if constraint['type'] == 1:
                 #intersecting
                 #if they hawe different chars at intersecting fields
-                comparing_var_val = vars[constraint['var']]
+                comparing_var_val = vars[constraint_var]
                 if comparing_var_val is not None:
-                    my_ind = constraint['my_ind']
-                    var_ind = constraint['var_ind']
-                    if comparing_var_val[var_ind] != sel_val[my_ind]:
-                        print('VAL: ', sel_val, ' my_ind: ', my_ind, ' and VAL: ', comparing_var_val, ' var_ind: ', var_ind,  'in VAR: ', constraint['var'], ' dont match')
+                    if not self.check_intersection(sel_val, comparing_var_val, constraint):
+                        print('VAL: ', sel_val, ' my_ind: ', constraint['my_ind'], ' and VAL: ', comparing_var_val, ' var_ind: ', constraint['var_ind'],  'in VAR: ', constraint_var, ' dont match')
                         return False
+                    # if comparing_var_val[var_ind] != sel_val[my_ind]:
+                    #     print('VAL: ', sel_val, ' my_ind: ', my_ind, ' and VAL: ', comparing_var_val, ' var_ind: ', var_ind,  'in VAR: ', constraint['var'], ' dont match')
+                    #     return False
 
         return True
 
@@ -242,32 +249,32 @@ class ForwardChecking(algorithms.Backtracking):
     def forward_check_vars(self, sel_var, sel_val, vars, domains, constraints):
         
         print("FORWARD CHECKING - VAR: ", sel_var, " VAL: ", sel_val)
-        for constraint in constraints[sel_var]:
+        for constraint_var, constraint in constraints[sel_var].items():
             
             #constraining variable
-            comparing_var = constraint['var']
+            #comparing_var = constraint['var']
 
             #value not yet assigned
-            if vars[comparing_var] is None:
+            if vars[constraint_var] is None:
                 remove_list = []
                 my_ind = constraint['my_ind']
                 var_ind = constraint['var_ind']
-                for word in domains[comparing_var]:
+                for word in domains[constraint_var]:
                     if word[var_ind] != sel_val[my_ind]:
                         remove_list.append(word)
 
-                print("DOMAIN BEFORE FORWARD CHECKING - VAR: ", comparing_var)
-                print(domains[comparing_var])
+                print("DOMAIN BEFORE FORWARD CHECKING - VAR: ", constraint_var)
+                print(domains[constraint_var])
 
                 for word in remove_list:
-                    domains[comparing_var].remove(word)
-                    print(word, " removed from domain for VAR: ", comparing_var)
+                    domains[constraint_var].remove(word)
+                    print(word, " removed from domain for VAR: ", constraint_var)
 
-                print("DOMAIN AFTER FORWARD CHECKING - VAR: ", comparing_var)
-                print(domains[comparing_var])
+                print("DOMAIN AFTER FORWARD CHECKING - VAR: ", constraint_var)
+                print(domains[constraint_var])
 
 
-                if not len(domains[comparing_var]):
+                if not len(domains[constraint_var]):
                     return False
 
         return True
@@ -324,16 +331,44 @@ class ArcConsistency(algorithms.ForwardChecking):
 
         return arcs
 
+    def resolve_inconsistency(self, sel_var, sel_val, domains, constraints):
+        arcs = self.get_arcs(constraints)
+        print("RESOLVING INCONSISTENCIES")
+        while len(arcs):
+            x, y, constraint = arcs.pop(0)
+            print("ARC X: ", x, " Y: ", y)
+            if x != sel_var and y != sel_var:
+                x_remove = []
+                for x_val in domains[x]:
+                    remove = True
+                    for y_val in domains[y]:
+                        if self.check_intersection(x_val, y_val, constraint):
+                            remove = False
+                            break
+                    if remove:
+                        x_remove.append(x_val)
 
+                print("DOMAIN BEFORE AC - VAR: ", x)
+                print(domains[x])
 
-    # def update_arcs_domains(self, sel_var, sel_val, domains, constraints):
-    #     all_arcs = self.get_arcs(constraints)
-    #     while len(all_arcs) > 0:
-    #         x, y, constraint = all_arcs.pop(0)
-    #         if x != sel_var and y != sel_var:
-    #             val_pairs = itertools.product(domains[x], domains[y])
-    #             for pair in val_pairs:
+                if len(x_remove):
 
+                    for word in x_remove:
+                        domains[x].remove(word)
+                        print(word, " removed from domain for VAR: ", x)
+                    
+                    if not len(domains[x]):
+                        return False
+                    
+                    for constraint_var, constraint in constraints[x].items():
+                        if constraint_var != sel_var:
+                            arcs.append((constraint_var, x, constraints[constraint_var][x]))
+                            print("ARC X: ", constraint_var, " Y: ", x, " ADDED")
+
+                print("DOMAIN AFTER AC - VAR: ", x)
+                print(domains[x])
+
+        return True
 
     def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
         if curr_var_ind == len(vars):
@@ -357,6 +392,10 @@ class ArcConsistency(algorithms.ForwardChecking):
                 copied_vars[var] = val
                 var_values[var] = val
                 if not self.forward_check_vars(var, val, copied_vars, copied_domains, constraints):
+                    #if var domain is empty after forward cheking do not continue search
+                    print("DOMAIN EMPTY")
+                    continue
+                if not self.resolve_inconsistency(var, val, copied_domains, constraints):
                     #if var domain is empty after forward cheking do not continue search
                     print("DOMAIN EMPTY")
                     continue
@@ -432,6 +471,9 @@ if __name__ == "__main__":
     elif alg == 3:
         print("Get all arcs test")
         ArcConsistency().test(tiles, variables, words)
+    elif alg == 4:
+        print("Get all arcs test")
+        ArcConsistency().get_algorithm_steps(tiles, variables, words)
     
     # print(tiles)
     # print(words)

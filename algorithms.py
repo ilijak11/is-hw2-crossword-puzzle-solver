@@ -48,6 +48,12 @@ class Backtracking(Algorithm):
         vars = list(variables.keys())
         constraints = {var: {} for var in vars}
 
+        # constraints is dict of dicts
+        # constraints = {var: {
+        #   var1: {ind, ind},
+        #    ...
+        # }}
+
         for i in range(len(vars)):
             j = i + 1
             var1 = vars[i]
@@ -77,6 +83,12 @@ class Backtracking(Algorithm):
         
         return domains
 
+    def check_intersection(self, x_val, y_val, constraint):
+        #return True if vars have the same letter at intersecting indexes
+        x_ind = constraint['my_ind']
+        y_ind = constraint['var_ind']
+        return x_val[x_ind] == y_val[y_ind]
+
     def is_consistent(self, sel_var, sel_val, vars, domains, constraints):
         #var - selected variable
         #val - potential variable value
@@ -98,10 +110,8 @@ class Backtracking(Algorithm):
                 #if they hawe different chars at intersecting fields
                 comparing_var_val = vars[constraint_var]
                 if comparing_var_val is not None:
-                    my_ind = constraint['my_ind']
-                    var_ind = constraint['var_ind']
-                    if comparing_var_val[var_ind] != sel_val[my_ind]:
-                        print('VAL: ', sel_val, ' my_ind: ', my_ind, ' and VAL: ', comparing_var_val, ' var_ind: ', var_ind,  'in VAR: ', constraint_var, ' dont match')
+                    if not self.check_intersection(sel_val, comparing_var_val, constraint):
+                        print('VAL: ', sel_val, ' my_ind: ', constraint['my_ind'], ' and VAL: ', comparing_var_val, ' var_ind: ', constraint['var_ind'],  'in VAR: ', constraint_var, ' dont match')
                         return False
 
         return True
@@ -192,6 +202,7 @@ class ForwardChecking(Backtracking):
                 my_ind = constraint['my_ind']
                 var_ind = constraint['var_ind']
                 for word in domains[constraint_var]:
+                    #if not self.check_intersection(sel_val, word, constraint):
                     if word[var_ind] != sel_val[my_ind]:
                         remove_list.append(word)
 

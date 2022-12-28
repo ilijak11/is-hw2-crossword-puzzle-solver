@@ -3,7 +3,7 @@ import sys
 import game
 import algorithms
 import copy
-import itertools
+import time
 
 
 class BackTracking(algorithms.Algorithm):
@@ -331,8 +331,24 @@ class ArcConsistency(algorithms.ForwardChecking):
 
         return arcs
 
-    def resolve_inconsistency(self, sel_var, sel_val, domains, constraints):
-        arcs = self.get_arcs(constraints)
+    def get_arcs2(self, variables, constraints):
+        arcs = []
+        for var, var_constraints in constraints.items():
+            if variables[var] is not None:
+                #value already assigned
+                continue
+
+            for constraint_var, constraint in var_constraints.items():
+                if variables[constraint_var] is not None:
+                    #value already assigned
+                    continue
+
+                arcs.append((var, constraint_var, constraint))
+
+        return arcs
+
+    def resolve_inconsistency(self, sel_var, sel_val, vars, domains, constraints):
+        arcs = self.get_arcs2(vars, constraints)
         print("RESOLVING INCONSISTENCIES")
         while len(arcs):
             x, y, constraint = arcs.pop(0)
@@ -361,7 +377,7 @@ class ArcConsistency(algorithms.ForwardChecking):
                         return False
                     
                     for constraint_var, constraint in constraints[x].items():
-                        if constraint_var != sel_var:
+                        if constraint_var != sel_var and vars[constraint_var] is None:
                             arcs.append((constraint_var, x, constraints[constraint_var][x]))
                             print("ARC X: ", constraint_var, " Y: ", x, " ADDED")
 
@@ -395,7 +411,7 @@ class ArcConsistency(algorithms.ForwardChecking):
                     #if var domain is empty after forward cheking do not continue search
                     print("DOMAIN EMPTY")
                     continue
-                if not self.resolve_inconsistency(var, val, copied_domains, constraints):
+                if not self.resolve_inconsistency(var, val, vars, copied_domains, constraints):
                     #if var domain is empty after forward cheking do not continue search
                     print("DOMAIN EMPTY")
                     continue
@@ -460,6 +476,7 @@ if __name__ == "__main__":
     variables = game.Game.get_variables(tiles)
 
     print(variables)
+    start_t = time.time()
     if alg == 0:
         BackTracking().build_constraints3(variables, tiles)
     elif alg == 1:
@@ -474,6 +491,7 @@ if __name__ == "__main__":
     elif alg == 4:
         print("Get all arcs test")
         ArcConsistency().get_algorithm_steps(tiles, variables, words)
+    print("Elapsed time: ", time.time() - start_t)
     
     # print(tiles)
     # print(words)

@@ -36,13 +36,13 @@ class Backtracking(Algorithm):
             if var[-1] == 'v':
                 var_fields[var] = [((row_len * (i + inc))  + j) for inc in range(var_len)]
 
-        print('VARS')
-        for k, v in variables.items():
-            print(k, " ", v)
+        # print('VARS')
+        # for k, v in variables.items():
+        #     print(k, " ", v)
 
-        print('VAR FIELDS')
-        for k, v in var_fields.items():
-            print(k, " ", v)
+        # print('VAR FIELDS')
+        # for k, v in var_fields.items():
+        #     print(k, " ", v)
 
 
         vars = list(variables.keys())
@@ -68,9 +68,9 @@ class Backtracking(Algorithm):
                         
                 j = j + 1
 
-        print('CONSTRAINTS')
-        for k, v in constraints.items():
-            print(k, " ", v)
+        # print('CONSTRAINTS')
+        # for k, v in constraints.items():
+        #     print(k, " ", v)
 
         return constraints
 
@@ -111,59 +111,60 @@ class Backtracking(Algorithm):
                 comparing_var_val = vars[constraint_var]
                 if comparing_var_val is not None:
                     if not self.check_intersection(sel_val, comparing_var_val, constraint):
-                        print('VAL: ', sel_val, ' my_ind: ', constraint['my_ind'], ' and VAL: ', comparing_var_val, ' var_ind: ', constraint['var_ind'],  'in VAR: ', constraint_var, ' dont match')
+                        # print('VAL: ', sel_val, ' my_ind: ', constraint['my_ind'], ' and VAL: ', comparing_var_val, ' var_ind: ', constraint['var_ind'],  'in VAR: ', constraint_var, ' dont match')
                         return False
 
         return True
 
     def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
         if curr_var_ind == len(vars):
-            print("END")
-            print("---------------------")
+            # print("END")
+            # print("---------------------")
             return True
 
         var = list(vars)[curr_var_ind]
 
-        print("---------------------")
-        print("VAR: ", var)
+        # print("---------------------")
+        # print("VAR: ", var)
 
         for ind, val in enumerate(domains[var]):
-            print("VAR: ", var)
+            #print("VAR: ", var)
             if self.is_consistent(var, val, vars, domains, constraints):
-                print("     VAL: ", val, " OK")
-                #solution.append([var, ind, domains])
+                #print("     VAL: ", val, " OK")
+                solution.append([var, ind, domains])
                 copied_domains = copy.deepcopy(domains)
                 copied_vars = copy.deepcopy(vars)
                 copied_domains[var] = [val]
                 copied_vars[var] = val
                 var_values[var] = val
 
-                solution.append([var, copied_domains[var].index(val), copied_domains])
+                #solution.append([var, copied_domains[var].index(val), copied_domains])
                 
                 if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
-                    print("STEP UP")
-                    print("---------------------")
+                    # print("STEP UP")
+                    # print("---------------------")
                     return True
             else:
-                print("     VAL: ", val, " NOT OK")
+                pass
+                # print("     VAL: ", val, " NOT OK")
         
         #backtrack
         solution.append([var, None, domains])
-        print("BACKTRACK")
-        print("---------------------")
+        # print("BACKTRACK")
+        # print("---------------------")
         return False
 
     def get_algorithm_steps(self, tiles, variables, words):
         #build domains:
         domains = self.build_domains(variables, words)
-        print("Domains")
+        #print("Domains")
         #print(domains)
-        for var, domain in domains.items():
-            print(var, " ", domain)
+        # for var, domain in domains.items():
+        #     print(var, " ", domain)
 
         #build constraints:
         constraints = self.build_constraints(variables, tiles)
-        print("Constraints")
+        # print("Constraints")
         #print(constraints)
 
         solution = []
@@ -171,15 +172,15 @@ class Backtracking(Algorithm):
 
         #call backtrack algorithm
 
-        print("Backtrack START")
+        # print("Backtrack START")
         success = self.backtrack({var: None for var in variables.keys()}, words, 0, domains, constraints, solution, var_values)
-        print("Backtrack END")
+        # print("Backtrack END")
 
         if success:
             print("Solution found!")
-            print("STEPS: ", len(solution))
-            print(solution)
-            print("SOLUTON")
+            # print("STEPS: ", len(solution))
+            # print(solution)
+            # print("SOLUTON")
             print(var_values)
         else:
             print("Solution does not exist")
@@ -193,7 +194,7 @@ class ForwardChecking(Backtracking):
 
     def forward_check_vars(self, sel_var, sel_val, vars, domains, constraints):
         
-        print("FORWARD CHECKING - VAR: ", sel_var, " VAL: ", sel_val)
+        #print("FORWARD CHECKING - VAR: ", sel_var, " VAL: ", sel_val)
         for constraint_var, constraint in constraints[sel_var].items():
         
             #value not yet assigned
@@ -206,15 +207,15 @@ class ForwardChecking(Backtracking):
                     if word[var_ind] != sel_val[my_ind]:
                         remove_list.append(word)
 
-                print("DOMAIN BEFORE FORWARD CHECKING - VAR: ", constraint_var)
-                print(domains[constraint_var])
+                # print("DOMAIN BEFORE FORWARD CHECKING - VAR: ", constraint_var)
+                # print(domains[constraint_var])
 
                 for word in remove_list:
                     domains[constraint_var].remove(word)
-                    print(word, " removed from domain for VAR: ", constraint_var)
+                    #print(word, " removed from domain for VAR: ", constraint_var)
 
-                print("DOMAIN AFTER FORWARD CHECKING - VAR: ", constraint_var)
-                print(domains[constraint_var])
+                # print("DOMAIN AFTER FORWARD CHECKING - VAR: ", constraint_var)
+                # print(domains[constraint_var])
 
 
                 if not len(domains[constraint_var]):
@@ -226,19 +227,19 @@ class ForwardChecking(Backtracking):
 
     def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
         if curr_var_ind == len(vars):
-            print("END")
-            print("---------------------")
+            # print("END")
+            # print("---------------------")
             return True
 
         var = list(vars.keys())[curr_var_ind]
 
-        print("---------------------")
-        print("VAR: ", var)
+        # print("---------------------")
+        # print("VAR: ", var)
 
         for ind, val in enumerate(domains[var]):
-            print("VAR: ", var)
+            #print("VAR: ", var)
             if self.is_consistent(var, val, vars, domains, constraints):
-                print("     VAL: ", val, " OK")
+                #print("     VAL: ", val, " OK")
                 solution.append([var, ind, domains])
                 copied_domains = copy.deepcopy(domains)
                 copied_vars = copy.deepcopy(vars)
@@ -249,40 +250,45 @@ class ForwardChecking(Backtracking):
                     #if var domain is empty after forward cheking do not continue search
                     copied_vars[var] = None
                     var_values[var] = None
-                    print("DOMAIN EMPTY")
+                    #print("DOMAIN EMPTY")
                     continue
 
                 #solution.append([var, copied_domains[var].index(val), copied_domains])
 
                 if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
-                    print("STEP UP")
-                    print("---------------------")
+                    # print("STEP UP")
+                    # print("---------------------")
                     return True
             else:
-                print("     VAL: ", val, " NOT OK")
+                pass
+                #print("     VAL: ", val, " NOT OK")
         
         #backtrack
         solution.append([var, None, domains])
-        print("BACKTRACK")
-        print("---------------------")
+        # print("BACKTRACK")
+        # print("---------------------")
         return False
 
 class ArcConsistency(ForwardChecking):
 
-    def get_arcs(self, constraints):
+    def get_unassigned_arcs(self, vars, constraints):
         arcs = []
         for var, var_constraints in constraints.items():
+            if vars[var] is not None:
+                continue
             for constraint_var, constraint in var_constraints.items():
+                if vars[constraint_var] is not None:
+                    continue
                 arcs.append((var, constraint_var, constraint))
 
         return arcs
 
-    def resolve_inconsistency(self, sel_var, sel_val, domains, constraints):
-        arcs = self.get_arcs(constraints)
-        print("RESOLVING INCONSISTENCIES")
+    def resolve_inconsistency(self, sel_var, sel_val, vars, domains, constraints):
+        arcs = self.get_unassigned_arcs(vars, constraints)
+        #print("RESOLVING INCONSISTENCIES")
         while len(arcs):
             x, y, constraint = arcs.pop(0)
-            print("ARC X: ", x, " Y: ", y)
+            #print("ARC X: ", x, " Y: ", y)
             if x != sel_var and y != sel_var:
                 x_remove = []
                 for x_val in domains[x]:
@@ -294,43 +300,43 @@ class ArcConsistency(ForwardChecking):
                     if remove:
                         x_remove.append(x_val)
 
-                print("DOMAIN BEFORE AC - VAR: ", x)
-                print(domains[x])
+                # print("DOMAIN BEFORE AC - VAR: ", x)
+                # print(domains[x])
 
                 if len(x_remove):
 
                     for word in x_remove:
                         domains[x].remove(word)
-                        print(word, " removed from domain for VAR: ", x)
+                        #print(word, " removed from domain for VAR: ", x)
                     
                     if not len(domains[x]):
                         return False
                     
                     for constraint_var, constraint in constraints[x].items():
-                        if constraint_var != sel_var:
+                        if constraint_var != sel_var and vars[constraint_var] is None:
                             arcs.append((constraint_var, x, constraints[constraint_var][x]))
-                            print("ARC X: ", constraint_var, " Y: ", x, " ADDED")
+                            #print("ARC X: ", constraint_var, " Y: ", x, " ADDED")
 
-                print("DOMAIN AFTER AC - VAR: ", x)
-                print(domains[x])
+                # print("DOMAIN AFTER AC - VAR: ", x)
+                # print(domains[x])
 
         return True
 
     def backtrack(self, vars, words, curr_var_ind, domains, constraints, solution, var_values):
         if curr_var_ind == len(vars):
-            print("END")
-            print("---------------------")
+            # print("END")
+            # print("---------------------")
             return True
 
         var = list(vars.keys())[curr_var_ind]
 
-        print("---------------------")
-        print("VAR: ", var)
+        # print("---------------------")
+        # print("VAR: ", var)
 
         for ind, val in enumerate(domains[var]):
-            print("VAR: ", var)
+            #print("VAR: ", var)
             if self.is_consistent(var, val, vars, domains, constraints):
-                print("     VAL: ", val, " OK")
+                #print("     VAL: ", val, " OK")
                 solution.append([var, ind, domains])
                 copied_domains = copy.deepcopy(domains)
                 copied_vars = copy.deepcopy(vars)
@@ -341,27 +347,28 @@ class ArcConsistency(ForwardChecking):
                     #if var domain is empty after forward cheking do not continue search
                     copied_vars[var] = None
                     var_values[var] = None
-                    print("DOMAIN EMPTY")
+                    #print("DOMAIN EMPTY")
                     continue
 
-                if not self.resolve_inconsistency(var, val, copied_domains, constraints):
+                if not self.resolve_inconsistency(var, val, vars, copied_domains, constraints):
                     #if var domain is empty after forward cheking do not continue search
                     copied_vars[var] = None
                     var_values[var] = None
-                    print("DOMAIN EMPTY")
+                    #print("DOMAIN EMPTY")
                     continue
 
                 #solution.append([var, copied_domains[var].index(val), copied_domains])
 
                 if self.backtrack(copied_vars, words, curr_var_ind+1, copied_domains, constraints, solution, var_values):
-                    print("STEP UP")
-                    print("---------------------")
+                    # print("STEP UP")
+                    # print("---------------------")
                     return True
             else:
-                print("     VAL: ", val, " NOT OK")
+                pass
+                #print("     VAL: ", val, " NOT OK")
         
         #backtrack
         solution.append([var, None, domains])
-        print("BACKTRACK")
-        print("---------------------")
+        # print("BACKTRACK")
+        # print("---------------------")
         return False
